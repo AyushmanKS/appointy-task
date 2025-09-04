@@ -11,8 +11,3 @@ var (
 		Help: "The total number of redirects processed",
 	})
 )
-
-func init() {
-	prometheus.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}))
-	prometheus.MustRegister(prometheus.NewGoCollector())
-}

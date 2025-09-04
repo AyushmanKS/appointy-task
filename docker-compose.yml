@@ -1,4 +1,3 @@
-# docker-compose.yml
 version: '3.8'
 
 services:
@@ -12,7 +11,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data # Persists database data
+      - ./postgres-data:/var/lib/postgresql/data 
 
   prometheus:
     image: prom/prometheus:latest
@@ -20,13 +19,13 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml # Mount our config file
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml 
 
   grafana:
     image: grafana/grafana:latest
     container_name: morphlink_grafana
     ports:
-      - "3001:3000" # We use 3001 locally to avoid conflict with our Go app on 3000
+      - "3001:3000" 
     depends_on:
       - prometheus
 

@@ -13,22 +13,22 @@ import (
 	"github.com/AyushmanKS/appointy-task/internal/link"
 	_ "github.com/AyushmanKS/appointy-task/internal/metrics"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 )
 
 func main() {
-
 	_, b, _, _ := runtime.Caller(0)
 	basepath := filepath.Dir(b)
 	envPath := filepath.Join(basepath, "..", "..", ".env")
 	if err := godotenv.Load(envPath); err != nil {
-		log.Println("No backend/.env file found, relying on system environment variables.")
+		log.Println("No backend/.env file found.")
 	}
 
 	if os.Getenv("DATABASE_URL") == "" {
-		log.Fatal("FATAL: DATABASE_URL environment variable is not set. Please ensure a backend/.env file exists with the correct content.")
+		log.Fatal("FATAL: DATABASE_URL is not set.")
 	}
 
 	database.InitDB()
@@ -36,24 +36,30 @@ func main() {
 
 	go hub.GlobalHub.Run()
 
-	mux := http.NewServeMux()
+	r := chi.NewRouter()
 
-	mux.Handle("/metrics", promhttp.Handler())
-	mux.HandleFunc("/register", auth.RegisterHandler)
-	mux.HandleFunc("/login", auth.LoginHandler)
-	mux.HandleFunc("/r/", link.RedirectHandler)
-	mux.HandleFunc("/ws", auth.WSHandler)
-
-	mux.Handle("/shorten", auth.JwtMiddleware(http.HandlerFunc(link.CreateLinkHandler)))
-	mux.Handle("/links", auth.JwtMiddleware(http.HandlerFunc(link.GetLinksHandler)))
-	mux.Handle("/analytics/", auth.JwtMiddleware(http.HandlerFunc(link.GetAnalyticsHandler)))
-
-	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "POST", "OPTIONS"},
-		AllowedHeaders: []string{"Authorization", "Content-Type"},
+	corsHandler := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders:   []string{"Authorization", "Content-Type"},
+		AllowCredentials: true,
 	})
-	handler := c.Handler(mux)
+	r.Use(corsHandler.Handler)
+
+	r.Group(func(r chi.Router) {
+		r.Get("/metrics", promhttp.Handler().ServeHTTP)
+		r.Post("/register", auth.RegisterHandler)
+		r.Post("/login", auth.LoginHandler)
+		r.Get("/r/{id}", link.RedirectHandler)
+		r.Get("/ws", auth.WSHandler)
+	})
+
+	r.Group(func(r chi.Router) {
+		r.Use(auth.JwtMiddleware)
+		r.Post("/shorten", link.CreateLinkHandler)
+		r.Get("/links", link.GetLinksHandler)
+		r.Get("/analytics/{id}", link.GetAnalyticsHandler)
+	})
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -61,7 +67,7 @@ func main() {
 	}
 
 	log.Println("Starting server on port", port)
-	if err := http.ListenAndServe(":"+port, handler); err != nil {
+	if err := http.ListenAndServe(":"+port, r); err != nil {
 		log.Fatalf("Error starting server: %v", err)
 	}
 }
