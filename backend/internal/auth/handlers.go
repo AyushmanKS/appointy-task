@@ -1,4 +1,3 @@
-// internal/auth/handlers.go
 package auth
 
 import (

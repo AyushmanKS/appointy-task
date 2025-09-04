@@ -1,27 +1,22 @@
-// frontend/js/dashboard.js
 const API_BASE_URL = 'http://localhost:3000';
 const token = localStorage.getItem('jwt_token');
 
-// Elements
 const logoutBtn = document.getElementById('logout-btn');
 const createLinkForm = document.getElementById('create-link-form');
 const longUrlInput = document.getElementById('long-url');
 const linksContainer = document.getElementById('links-container');
 
-// --- Main execution on page load ---
 document.addEventListener('DOMContentLoaded', () => {
     if (!token) {
         window.location.href = 'index.html';
         return;
     }
     fetchLinks();
-    connectWebSocket(); // Connect to WebSocket on page load
+    connectWebSocket();
 });
 
-// --- Event Listeners ---
 logoutBtn.addEventListener('click', () => {
     localStorage.removeItem('jwt_token');
-    // In a real app, you would also close the WebSocket connection here.
     window.location.href = 'index.html';
 });
 
@@ -45,9 +40,7 @@ createLinkForm.addEventListener('submit', async (e) => {
     }
 });
 
-// --- WebSocket Logic ---
 function connectWebSocket() {
-    // Convert http:// to ws:// and https:// to wss://
     const wsUrl = API_BASE_URL.replace(/^http/, 'ws');
     const socket = new WebSocket(`${wsUrl}/ws?token=${token}`);
 
@@ -59,7 +52,6 @@ function connectWebSocket() {
         console.log('Received message from server:', event.data);
         const message = JSON.parse(event.data);
         
-        // Find the corresponding element on the page and update its text content.
         const clicksEl = document.getElementById(`clicks-${message.link_id}`);
         if (clicksEl) {
             clicksEl.textContent = message.click_count;
@@ -68,17 +60,14 @@ function connectWebSocket() {
 
     socket.onclose = () => {
         console.log('WebSocket connection closed. Attempting to reconnect in 5 seconds...');
-        // This is a simple auto-reconnect logic.
         setTimeout(connectWebSocket, 5000);
     };
 
     socket.onerror = (error) => {
         console.error('WebSocket error:', error);
-        // The onclose event will usually fire after an error, triggering the reconnect.
     };
 }
 
-// --- Data Fetching Functions ---
 async function fetchLinks() {
     try {
         const response = await fetch(`${API_BASE_URL}/links`, {
@@ -114,7 +103,7 @@ function renderLinks(links) {
             </div>
         `;
         linksContainer.appendChild(linkCard);
-        fetchAnalytics(link.short_id); // Fetch initial analytics once
+        fetchAnalytics(link.short_id);
     });
 }
 

@@ -1,4 +1,3 @@
-// backend/internal/auth/ws_handler.go
 package auth
 
 import (
@@ -8,17 +7,16 @@ import (
 	"strconv"
 
 	"github.com/AyushmanKS/appointy-task/internal/hub"
-	"github.com/golang-jwt/jwt/v5" // <-- THIS LINE IS NOW CORRECT
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/websocket"
 )
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
-		return true // Allow all origins for local development
+		return true
 	},
 }
 
-// WSHandler handles WebSocket connection requests.
 func WSHandler(w http.ResponseWriter, r *http.Request) {
 	tokenString := r.URL.Query().Get("token")
 	if tokenString == "" {
@@ -54,15 +52,13 @@ func WSHandler(w http.ResponseWriter, r *http.Request) {
 
 	hub.GlobalHub.RegisterClient(client)
 
-	// This goroutine keeps the connection alive and handles unregistering.
 	go func() {
 		defer func() {
 			hub.GlobalHub.UnregisterClient(client)
 		}()
 		for {
-			// Read messages to detect when the client closes the connection.
 			if _, _, err := conn.ReadMessage(); err != nil {
-				break // Exit loop on error, which triggers the defer.
+				break
 			}
 		}
 	}()

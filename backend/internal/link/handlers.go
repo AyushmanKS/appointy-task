@@ -1,4 +1,3 @@
-// backend/internal/link/handlers.go
 package link
 
 import (
@@ -12,10 +11,9 @@ import (
 
 	"github.com/AyushmanKS/appointy-task/internal/auth"
 	"github.com/AyushmanKS/appointy-task/internal/database"
-	"github.com/AyushmanKS/appointy-task/internal/hub" // Import the hub
+	"github.com/AyushmanKS/appointy-task/internal/hub"
 )
 
-// CreateLinkHandler handles the creation of a new short URL for an authenticated user.
 func CreateLinkHandler(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok {
@@ -44,7 +42,6 @@ func CreateLinkHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"short_url": fullShortURL})
 }
 
-// RedirectHandler finds the original URL and redirects. It also records the click asynchronously.
 func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Path[len("/r/"):]
 	var originalURL string
@@ -60,9 +57,7 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, originalURL, http.StatusFound)
 }
 
-// recordClick saves the click and broadcasts the new total count via the WebSocket Hub.
 func recordClick(linkID string, r *http.Request) {
-	// First, insert the click record.
 	queryInsert := "INSERT INTO clicks (url_id, ip_address, user_agent) VALUES ($1, $2, $3)"
 	_, err := database.DB.ExecContext(context.Background(), queryInsert, linkID, r.RemoteAddr, r.UserAgent())
 	if err != nil {
@@ -70,7 +65,6 @@ func recordClick(linkID string, r *http.Request) {
 		return
 	}
 
-	// Now, query the new total count and find out who owns the link.
 	var totalClicks int
 	var userID int
 	queryCount := `
@@ -86,11 +80,9 @@ func recordClick(linkID string, r *http.Request) {
 		return
 	}
 
-	// Tell the global hub to send an update to this specific user.
 	hub.GlobalHub.BroadcastUpdate(userID, linkID, totalClicks)
 }
 
-// GetAnalyticsHandler retrieves click data for a link.
 func GetAnalyticsHandler(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok {
@@ -109,7 +101,6 @@ func GetAnalyticsHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]int{"total_clicks": totalClicks})
 }
 
-// GetLinksHandler retrieves all links for the authenticated user.
 func GetLinksHandler(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok {
