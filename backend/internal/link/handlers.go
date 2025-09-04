@@ -1,4 +1,4 @@
-// internal/link/handlers.go
+// backend/internal/link/handlers.go
 package link
 
 import (
@@ -10,13 +10,13 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/AyushmanKS/appointy-task/internal/auth" // Import the auth package
+	"github.com/AyushmanKS/appointy-task/internal/auth"
 	"github.com/AyushmanKS/appointy-task/internal/database"
+	"github.com/AyushmanKS/appointy-task/internal/hub" // Import the hub
 )
 
 // CreateLinkHandler handles the creation of a new short URL for an authenticated user.
 func CreateLinkHandler(w http.ResponseWriter, r *http.Request) {
-	// Use our new safe function to get the user ID.
 	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok {
 		http.Error(w, "Could not retrieve user ID from token", http.StatusInternalServerError)
@@ -44,7 +44,7 @@ func CreateLinkHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"short_url": fullShortURL})
 }
 
-// RedirectHandler finds the original URL and redirects.
+// RedirectHandler finds the original URL and redirects. It also records the click asynchronously.
 func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Path[len("/r/"):]
 	var originalURL string
@@ -60,12 +60,34 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, originalURL, http.StatusFound)
 }
 
+// recordClick saves the click and broadcasts the new total count via the WebSocket Hub.
 func recordClick(linkID string, r *http.Request) {
-	query := "INSERT INTO clicks (url_id, ip_address, user_agent) VALUES ($1, $2, $3)"
-	_, err := database.DB.ExecContext(context.Background(), query, linkID, r.RemoteAddr, r.UserAgent())
+	// First, insert the click record.
+	queryInsert := "INSERT INTO clicks (url_id, ip_address, user_agent) VALUES ($1, $2, $3)"
+	_, err := database.DB.ExecContext(context.Background(), queryInsert, linkID, r.RemoteAddr, r.UserAgent())
 	if err != nil {
 		log.Printf("Failed to record click for link %s: %v", linkID, err)
+		return
 	}
+
+	// Now, query the new total count and find out who owns the link.
+	var totalClicks int
+	var userID int
+	queryCount := `
+		SELECT count(c.id), u.user_id
+		FROM clicks c
+		JOIN urls u ON c.url_id = u.id
+		WHERE c.url_id = $1
+		GROUP BY u.user_id`
+
+	err = database.DB.QueryRowContext(context.Background(), queryCount, linkID).Scan(&totalClicks, &userID)
+	if err != nil {
+		log.Printf("Failed to query new click count for link %s: %v", linkID, err)
+		return
+	}
+
+	// Tell the global hub to send an update to this specific user.
+	hub.GlobalHub.BroadcastUpdate(userID, linkID, totalClicks)
 }
 
 // GetAnalyticsHandler retrieves click data for a link.

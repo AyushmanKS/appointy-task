@@ -1,0 +1,34 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: morphlink_postgres
+    environment:
+      POSTGRES_USER: morphlink
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: morphlink_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data # Persists database data
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: morphlink_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml # Mount our config file
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: morphlink_grafana
+    ports:
+      - "3001:3000" # We use 3001 locally to avoid conflict with our Go app on 3000
+    depends_on:
+      - prometheus
+
+volumes:
+  postgres-data:

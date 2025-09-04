@@ -1,0 +1,10 @@
+# prometheus.yml
+global:
+  scrape_interval: 15s # How often to scrape metrics
+
+scrape_configs:
+  - job_name: 'morphlink-backend'
+    static_configs:
+      # 'host.docker.internal' is a special DNS name that allows the Docker
+      # container to connect to a service running on the host machine (your Go app).
+      - targets: ['host.docker.internal:3000']

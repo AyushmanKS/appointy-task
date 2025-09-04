@@ -1,5 +1,4 @@
-// js/auth.js
-const API_BASE_URL = 'https://appointy-task.onrender.com';
+const API_BASE_URL = 'http://localhost:3000';
 
 const loginForm = document.getElementById('login-form');
 const registerForm = document.getElementById('register-form');
