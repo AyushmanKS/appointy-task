@@ -1,3 +1,4 @@
+// internal/auth/middleware.go
 package auth
 
 import (
@@ -10,10 +11,13 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// Use a custom type for the context key to avoid collisions.
 type contextKey string
 
-const userContextKey = contextKey("userID")
+// UserContextKey is an exported key for accessing the user ID in the context.
+const UserContextKey = contextKey("userID")
 
+// JwtMiddleware protects routes by validating the JWT.
 func JwtMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
@@ -41,7 +45,16 @@ func JwtMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), userContextKey, userID)
+		// Add user ID to the request context using our exported key.
+		ctx := context.WithValue(r.Context(), UserContextKey, userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// --- NEW HELPER FUNCTION ---
+// GetUserIDFromContext safely retrieves the user ID from the context.
+// It returns the user ID and true if successful, or 0 and false if not.
+func GetUserIDFromContext(ctx context.Context) (int, bool) {
+	userID, ok := ctx.Value(UserContextKey).(int)
+	return userID, ok
 }
