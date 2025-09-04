@@ -1,5 +1,5 @@
 // js/auth.js
-const API_BASE_URL = 'https://appointy-task-service.onrender.com'; // Replace with your *backend* service URL when deploying
+const API_BASE_URL = 'https://appointy-task.onrender.com';
 
 const loginForm = document.getElementById('login-form');
 const registerForm = document.getElementById('register-form');
