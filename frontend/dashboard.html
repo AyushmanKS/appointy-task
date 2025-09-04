@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Morphlink</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <h1>Morphlink Dashboard</h1>
+        <div>
+            <span id="user-email"></span>
+            <button id="logout-btn" class="btn btn-secondary">Logout</button>
+        </div>
+    </header>
+    <div class="container">
+        <div class="card">
+            <h2>Create a new short link</h2>
+            <form id="create-link-form">
+                <div class="form-group">
+                    <input type="url" id="long-url" placeholder="Enter a long URL to shorten..." required>
+                </div>
+                <button type="submit" class="btn">Shorten</button>
+            </form>
+        </div>
+        
+        <h2>Your Links</h2>
+        <div id="links-container">
+            <!-- Links will be dynamically inserted here by JavaScript -->
+        </div>
+    </div>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

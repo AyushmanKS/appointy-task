@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Morphlink</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Morphlink</h1>
+        <h2>Create a new account</h2>
+        <form id="register-form" class="card">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" required>
+            </div>
+            <button type="submit" class="btn">Register</button>
+            <p id="error-message" class="error"></p>
+             <p id="success-message" class="success"></p>
+        </form>
+        <p>Already have an account? <a href="login.html">Login here</a></p>
+    </div>
+    <script src="js/auth.js"></script>
+</body>
+</html>
